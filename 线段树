@@ -1,0 +1,109 @@
+#include<iostream>
+#include<cmath>
+#include<algorithm>
+#include<string>
+#include<string.h>
+#include<stack>
+#include<queue>
+#include<list>
+#include<map>
+#include<vector>
+#include<cstdio>
+#define INF 0x3f3f3f3f
+using namespace std;
+const int N=1e5+10;
+long long lazy[N<<2];
+long long tree[N<<2];
+int arr[N<<2];
+void push_up(int root)
+{
+	tree[root]=tree[root<<1]+tree[root<<1|1];
+}
+void push_down(int root,int L,int R)
+{
+	if(lazy[root])
+	{
+		int mid=L+R>>1;
+		lazy[root<<1]+=lazy[root];
+		lazy[root<<1|1]+=lazy[root];
+		tree[root<<1]+=lazy[root]*(mid-L+1);
+		tree[root<<1|1]+=lazy[root]*(R-mid);
+		lazy[root]=0;
+	}
+}
+void build(int root,int start,int end)
+{
+	lazy[root]=0;
+	if(start==end)
+	{
+		tree[root]=arr[start];
+	}
+	else
+	{
+		int mid=start+end>>1;
+		int left=root<<1;
+		int right=root<<1|1;
+		build(left,start,mid);
+		build(right,mid+1,end);
+		push_up(root);
+	}
+}
+void update(int root,int start,int end,int L,int R,int val)
+{
+	if(L<=start && end<=R)
+	{
+		tree[root]+=(end-start+1)*val;
+		lazy[root]+=val;
+		return ;
+	}
+	push_down(root,start,end);
+	int mid=start+end>>1;
+	int left=root<<1;
+	int right=root<<1|1;
+	if(L<=mid)
+		update(left,start,mid,L,R,val);
+	if(R>mid)
+		update(right,mid+1,end,L,R,val);
+	push_up(root);
+}
+long long query(int root,int start,int end,int L,int R)
+{
+	if(L<=start && end<=R)
+		return tree[root];
+	push_down(root,start,end);
+	int mid=start+end>>1;
+	int left=root<<1;
+	int right=root<<1|1;
+	long long ans=0;
+	if(L<=mid)
+		ans+=query(left,start,mid,L,R);
+	if(R>mid)
+		ans+=query(right,mid+1,end,L,R);
+	return ans;
+}
+int main()
+{
+	int n,q;
+	scanf("%d%d",&n,&q);
+	for(int i=1;i<=n;i++)
+		scanf("%d",&arr[i]);
+	build(1,1,n);
+	while(q--)
+	{
+		char op[2];
+		scanf("%s",op);
+		if(op[0]=='Q')
+		{
+			int l,r;
+			scanf("%d%d",&l,&r);
+			printf("%lld\n",query(1,1,n,l,r));
+		}
+		else
+		{
+			int l,r,c;
+			scanf("%d%d%d",&l,&r,&c);
+			update(1,1,n,l,r,c);
+		}
+	}
+	return 0;
+}
